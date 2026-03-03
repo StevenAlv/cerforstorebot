@@ -256,6 +256,5 @@ def set_telegram_webhook():
     logging.info(f"Webhook set ke {webhook_url}")
 
 if __name__ == "__main__":
-    # Railway memberikan port dinamis via env var PORT
-    port = int(os.environ.get("PORT", 5000))  # 5000 untuk lokal/test
+    port = int(os.environ.get("PORT", 8080))  # pakai PORT Railway, default 8080 untuk lokal
     app.run(host="0.0.0.0", port=port, debug=False)
