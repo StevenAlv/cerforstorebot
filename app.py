@@ -9,7 +9,7 @@ app.permanent_session_lifetime = timedelta(minutes=60)
 # CONFIG TELEGRAM
 TELEGRAM_BOT_TOKEN = "8691971480:AAESKu9a75oiUck_gajHsx07iYXVpgJAN3c"  # Token bot kamu
 BOT_USERNAME = "CerforStoreBot"  # Username bot tanpa @
-ADMIN_CHAT_ID = "GANTI_DENGAN_CHAT_ID_KAMU"  # Ganti dengan chat ID admin (dapat dari @userinfobot)
+ADMIN_CHAT_ID = "6968200268"  # Ganti dengan chat ID admin (dapat dari @userinfobot)
 TELEGRAM_WEBHOOK_PATH = "/telegram_webhook"
 
 harga_silver = 35000
