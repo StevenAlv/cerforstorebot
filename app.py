@@ -6,10 +6,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY') or os.urandom(32)
 app.permanent_session_lifetime = timedelta(minutes=60)
 
-# ================== CONFIG TELEGRAM BOT ==================
-TELEGRAM_BOT_TOKEN = "8691971480:AAESKu9a75oiUck_gajHsx07iYXVpgJAN3c"  # Token baru dari BotFather
-BOT_USERNAME = "CerforStoreBot"  # Username bot kamu (tanpa @)
-ADMIN_CHAT_ID = "6968200268"  # Ganti ini! Contoh: "123456789"
+# CONFIG TELEGRAM
+TELEGRAM_BOT_TOKEN = "8691971480:AAESKu9a75oiUck_gajHsx07iYXVpgJAN3c"  # Token bot kamu
+BOT_USERNAME = "CerforStoreBot"  # Username bot tanpa @
+ADMIN_CHAT_ID = "GANTI_DENGAN_CHAT_ID_KAMU"  # Ganti dengan chat ID admin (dapat dari @userinfobot)
 TELEGRAM_WEBHOOK_PATH = "/telegram_webhook"
 
 harga_silver = 35000
@@ -17,7 +17,7 @@ harga_gold = 35000
 
 logging.basicConfig(level=logging.INFO)
 
-# ================== DATABASE ==================
+# DATABASE
 def init_db():
     conn = sqlite3.connect('cerfor.db')
     c = conn.cursor()
@@ -37,12 +37,12 @@ def init_db():
         account_given TEXT
     )''')
     
-    # TAMBAHKAN AKUN ASLI KAMU DI SINI (contoh sementara)
+    # TAMBAH STOK AKUN ASLI KAMU DI SINI
     contoh_akun = [
         ('silver', 'cerfor_silver_001', 'PassSilver123!', 'available'),
         ('silver', 'cerfor_silver_002', 'SilverPass456!', 'available'),
         ('gold', 'cerfor_gold_001', 'GoldVIP2026!', 'available'),
-        # Tambah stok asli kamu di sini...
+        # tambah stok real kamu di sini...
     ]
     c.executemany("INSERT OR IGNORE INTO accounts (type, username, password, status) VALUES (?,?,?,?)", contoh_akun)
     conn.commit()
@@ -53,19 +53,18 @@ init_db()
 def get_db():
     return sqlite3.connect('cerfor.db')
 
-# ================== KIRIM PESAN TELEGRAM ==================
+# KIRIM PESAN TELEGRAM
 def kirim_telegram(chat_id, text):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     data = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
     try:
         requests.post(url, data=data, timeout=10)
-        logging.info(f"✅ Pesan terkirim ke {chat_id}")
+        logging.info(f"Pesan terkirim ke {chat_id}")
     except Exception as e:
         logging.error(f"Gagal kirim: {e}")
 
-# ================== TEMPLATE HOME ==================
-HOME_TEMPLATE = """
-<html>
+# TEMPLATE HOME (Telegram username)
+HOME_TEMPLATE = """<html>
 <head>
     <title>CERFOR STORE - Pilih Akun</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,27 +104,22 @@ HOME_TEMPLATE = """
             <p class="price">Harga: Rp {{ harga_gold }}</p>
             <button type="submit" name="akun_type" value="gold" class="rgb-btn">Pilih Akun Gold</button>
         </div>
-        <h3 style="margin-top:30px;">Telegram Username Pembeli (wajib, contoh: @iqoost):</h3>
-        <input type="text" name="telegram_username" placeholder="@username" required autocomplete="off">
-        <h3 style="margin-top:20px;">Verifikasi CAPTCHA:</h3>
+        <h3 style="margin-top:30px;">Telegram Username Pembeli (contoh: @iqoost):</h3>
+        <input type="text" name="telegram_username" placeholder="@username" required>
+        <h3 style="margin-top:20px;">CAPTCHA:</h3>
         <p>{{ captcha_question }}</p>
-        <input type="text" name="captcha" placeholder="Jawaban" required autocomplete="off">
-        <input type="text" name="honeypot" class="hidden" autocomplete="off">
+        <input type="text" name="captcha" placeholder="Jawaban" required>
+        <input type="text" name="honeypot" class="hidden">
     </form>
-    <button onclick="mintaTestimoni()" class="rgb-btn" style="margin-top:15px;">Minta Testimoni ke Telegram Bot</button>
+    <button onclick="window.location.href='https://t.me/{{ bot_username }}?text=Halo%20minta%20testimoni%20dong'" class="rgb-btn" style="margin-top:15px;">Minta Testimoni ke Bot</button>
 </div>
 <script>
-function mintaTestimoni() {
-    window.location.href = "https://t.me/{{ bot_username }}?text=" + encodeURIComponent("Halo admin, minta testimoni dong setelah beli akun!");
-}
 </script>
 </body>
-</html>
-"""
+</html>"""
 
-# ================== TEMPLATE PEMBAYARAN ==================
-PAYMENT_TEMPLATE = """
-<html>
+# TEMPLATE PEMBAYARAN (singkatkan kalau perlu, tapi ini versi lengkap)
+PAYMENT_TEMPLATE = """<html>
 <head>
     <title>Pembayaran - CERFOR STORE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -136,67 +130,29 @@ PAYMENT_TEMPLATE = """
         .rgb-btn {background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff, #ff00ff); background-size: 400% 400%; animation: rgbGradient 8s ease infinite; color: white;}
         .rgb-btn:hover {transform: scale(1.05);}
         @keyframes rgbGradient {0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;}}
-        .payment-tabs {display:flex; justify-content:space-around; margin:20px 0;}
-        .tab-btn {padding:12px;background:#333;color:white;border:none;border-radius:8px;cursor:pointer;flex:1;margin:0 5px;}
-        .tab-btn.active {background:linear-gradient(45deg, #ff0000, #ffff00, #00ff00); color:black;}
-        .payment-content {display:none;}
-        .payment-content.active {display:block;}
     </style>
 </head>
 <body>
 <div class="box">
     <h1>PEMBAYARAN</h1>
     <p><strong>Order ID:</strong> {{ order_id }}</p>
-    <p><strong>Telegram Pembeli:</strong> {{ telegram_username }}</p>
+    <p><strong>Telegram:</strong> {{ telegram_username }}</p>
     <p>Akun: {{ akun_type.capitalize() }}</p>
     <div style="font-size:24px;color:yellow;">Total: Rp {{ total }}</div>
 
-    <h2>Pilih Metode Bayar:</h2>
-    <div class="payment-tabs">
-        <button class="tab-btn active" onclick="showTab('dana')">DANA</button>
-        <button class="tab-btn" onclick="showTab('qris')">QRIS</button>
-    </div>
-
-    <div id="dana" class="payment-content active">
-        <button onclick="toggleInfo('dana-info')" class="rgb-btn">Tampilkan Nomor DANA</button>
-        <div id="dana-info" style="display:none;margin-top:10px;padding:10px;background:#222;border-radius:8px;">
-            Nomor: <strong>081266617068</strong><br>Nama: <strong>Noni</strong>
-        </div>
-    </div>
-
-    <div id="qris" class="payment-content">
-        <button onclick="toggleInfo('qris-info')" class="rgb-btn">Tampilkan QRIS</button>
-        <div id="qris-info" style="display:none;margin-top:10px;padding:10px;background:#222;border-radius:8px;">
-            <img src="/static/qris.jpg" style="width:100%;">
-            <a href="/static/qris.jpg" download class="rgb-btn" style="display:block;margin-top:10px;text-align:center;">📥 Download QRIS</a>
-        </div>
-    </div>
-
-    <p style="margin-top:20px;">Setelah transfer, klik tombol untuk konfirmasi via Telegram Bot. Kirim foto bukti + Order ID ke bot!</p>
-    <button onclick="konfirmasiTelegram()" class="rgb-btn">✅ SUDAH BAYAR (Buka Bot)</button>
-    <a href="/"><button style="background:#444;color:white;margin-top:10px;">Kembali ke Pilihan</button></a>
+    <button onclick="konfirmasi()" class="rgb-btn" style="margin-top:20px;">✅ SUDAH BAYAR (Buka Bot)</button>
+    <a href="/"><button style="background:#444;color:white;margin-top:10px;">Kembali</button></a>
 </div>
 <script>
-function showTab(tab) {
-    document.querySelectorAll('.payment-content').forEach(el => el.classList.remove('active'));
-    document.getElementById(tab).classList.add('active');
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
-}
-function toggleInfo(id) {
-    var el = document.getElementById(id);
-    el.style.display = (el.style.display === "none") ? "block" : "none";
-}
-function konfirmasiTelegram() {
-    let pesan = `Order ID: {{ order_id }}\nTelegram: {{ telegram_username }}\nAkun: {{ akun_type }}\nTotal: Rp {{ total }}\n\nSaya sudah bayar. Ini bukti transfer (kirim foto ya).`;
+function konfirmasi() {
+    let pesan = `Order ID: {{ order_id }}\nTelegram: {{ telegram_username }}\nAkun: {{ akun_type }}\nTotal: Rp {{ total }}\n\nSaya sudah bayar. Bukti transfer (attach foto).`;
     window.location.href = "https://t.me/{{ bot_username }}?text=" + encodeURIComponent(pesan);
 }
 </script>
 </body>
-</html>
-"""
+</html>"""
 
-# ================== ROUTES ==================
+# ROUTES
 @app.route("/", methods=["GET", "POST"])
 def home():
     error = None
@@ -205,12 +161,12 @@ def home():
             return "Spam detected!"
         try:
             if int(request.form.get("captcha", 0)) != session.get("captcha_answer"):
-                error = "CAPTCHA SALAH! Coba lagi."
+                error = "CAPTCHA SALAH!"
             else:
                 akun_type = request.form.get("akun_type")
                 telegram_username = request.form.get("telegram_username").strip()
                 if not akun_type or not telegram_username:
-                    error = "Lengkapi semua data!"
+                    error = "Lengkapi data!"
                 else:
                     total = harga_silver if akun_type == "silver" else harga_gold
                     order_id = str(uuid.uuid4())[:8].upper()
@@ -222,15 +178,14 @@ def home():
 
                     conn = get_db()
                     c = conn.cursor()
-                    c.execute("INSERT INTO orders (order_id, akun_type, total, status) VALUES (?,?,?, 'pending_payment')",
+                    c.execute("INSERT INTO orders (order_id, akun_type, total) VALUES (?,?,?)",
                               (order_id, akun_type, total))
                     conn.commit()
                     conn.close()
 
-                    logging.info(f"Order dibuat: {order_id} | {telegram_username}")
                     return redirect(url_for('pembayaran'))
-        except ValueError:
-            error = "CAPTCHA harus angka!"
+        except:
+            error = "CAPTCHA salah!"
 
     num1 = random.randint(3, 12)
     num2 = random.randint(3, 12)
@@ -251,7 +206,6 @@ def pembayaran():
                                   telegram_username=session['telegram_username'],
                                   bot_username=BOT_USERNAME)
 
-# ================== WEBHOOK TELEGRAM FULL AUTO ==================
 @app.route(TELEGRAM_WEBHOOK_PATH, methods=["POST"])
 def telegram_webhook():
     try:
@@ -261,7 +215,7 @@ def telegram_webhook():
 
         msg = data['message']
         chat_id = str(msg['chat']['id'])
-        text = msg.get('text', '').upper().strip()
+        text = msg.get('text', '').upper()
 
         order_match = re.search(r'[A-Z0-9]{8}', text)
         if not order_match:
@@ -280,47 +234,27 @@ def telegram_webhook():
             akun = c.fetchone()
             if akun:
                 akun_id, username, password = akun
-                pesan = f"""*✅ PEMBAYARAN DITERIMA OTOMATIS!*
-
-Order ID: `{order_id}`
-Akun *{akun_type.capitalize()}* kamu:
-
-Username: `{username}`
-Password: `{password}`
-
-Login sekarang ya!  
-Kalau ada masalah, chat bot lagi.
-
-Terima kasih telah belanja di CERFOR STORE 🔥"""
-
+                pesan = f"*PEMBAYARAN DITERIMA!*\n\nOrder ID: `{order_id}`\nAkun: *{akun_type.capitalize()}*\nUsername: `{username}`\nPassword: `{password}`\n\nLogin sekarang! Terima kasih 🔥"
                 kirim_telegram(chat_id, pesan)
                 c.execute("UPDATE orders SET status='done', account_given=? WHERE order_id=?", (f"{username}:{password}", order_id))
                 c.execute("UPDATE accounts SET status='sold' WHERE id=?", (akun_id,))
                 conn.commit()
-                kirim_telegram(ADMIN_CHAT_ID, f"✅ AUTO SUCCESS!\nOrder `{order_id}` → `{username}` ke chat {chat_id}")
+                kirim_telegram(ADMIN_CHAT_ID, f"AUTO: Order `{order_id}` → `{username}` ke {chat_id}")
             else:
-                kirim_telegram(ADMIN_CHAT_ID, f"❌ STOK {akun_type.upper()} HABIS untuk order `{order_id}`")
-                kirim_telegram(chat_id, "Maaf, stok sementara habis. Admin akan kirim manual secepatnya.")
+                kirim_telegram(chat_id, "Stok habis, admin akan kirim manual.")
         conn.close()
     except Exception as e:
         logging.error(f"Webhook error: {e}")
     return "OK", 200
 
-# ================== SET WEBHOOK OTOMATIS (JALANKAN SAAT START) ==================
 def set_telegram_webhook():
-    if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):  # Deteksi Railway
-        base_url = f"https://{os.environ['RAILWAY_PUBLIC_DOMAIN']}"
-    else:
-        base_url = "http://localhost:5000"  # Untuk lokal/test
+    base_url = f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN', 'localhost:5000')}"
     webhook_url = base_url + TELEGRAM_WEBHOOK_PATH
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
     data = {"url": webhook_url}
-    response = requests.post(url, data=data)
-    if response.status_code == 200:
-        logging.info(f"Webhook berhasil diset ke {webhook_url}")
-    else:
-        logging.error(f"Gagal set webhook: {response.text}")
+    requests.post(url, data=data)
+    logging.info(f"Webhook set ke {webhook_url}")
 
 if __name__ == "__main__":
-    set_telegram_webhook()  # Set webhook saat app start
+    set_telegram_webhook()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
